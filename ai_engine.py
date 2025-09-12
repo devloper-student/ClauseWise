@@ -3,14 +3,19 @@ import json
 import re
 from typing import List, Dict, Any
 import spacy
-from openai import OpenAI
 import streamlit as st
+import requests
 
 class AIEngine:
-    """AI Engine for legal document analysis using OpenAI and spaCy"""
+    """AI Engine for legal document analysis using IBM Granite and spaCy"""
     
     def __init__(self):
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Initialize IBM Granite via direct API access
+        self.granite_api_url = "https://us-south.ml.cloud.ibm.com/ml/v1-beta/generation/text?version=2023-05-29"
+        self.granite_api_key = os.getenv("WATSONX_API_KEY")
+        self.granite_project_id = os.getenv("WATSONX_PROJECT_ID", "default-project")
+        self.model_id = "ibm/granite-3-8b-instruct"
+        
         # Load spaCy model (download if not available)
         try:
             self.nlp = spacy.load("en_core_web_sm")
@@ -153,53 +158,82 @@ class AIEngine:
         return classified_clauses
     
     def _classify_single_clause(self, clause_text: str) -> Dict[str, Any]:
-        """Classify a single clause using OpenAI"""
-        prompt = f"""
-        You are a legal expert assistant. Analyze the following legal clause and provide:
-        1. Category classification (choose from: Liability, Indemnity, Confidentiality, Termination, Payment, Intellectual Property, Dispute Resolution, Force Majeure, Governing Law, General)
-        2. Plain English summary (2-3 sentences max)
-        3. Risk level (low, medium, high)
-        4. Key terms mentioned
-        5. Potential concerns or red flags
+        """Classify a single clause using IBM Granite"""
+        prompt = f"""You are a legal expert assistant. Analyze the following legal clause and provide:
+1. Category classification (choose from: Liability, Indemnity, Confidentiality, Termination, Payment, Intellectual Property, Dispute Resolution, Force Majeure, Governing Law, General)
+2. Plain English summary (2-3 sentences max)  
+3. Risk level (low, medium, high)
+4. Key terms mentioned
+5. Potential concerns or red flags
 
-        Legal clause to analyze:
-        {clause_text}
+Legal clause to analyze:
+{clause_text}
 
-        Respond in JSON format with keys: category, simplified_text, risk_level, key_terms (array), concerns (array)
-        """
+Respond in JSON format with keys: category, simplified_text, risk_level, key_terms (array), concerns (array)"""
         
         try:
-            # the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a legal expert specializing in contract analysis. Provide accurate, concise analysis in the requested JSON format."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=500
-            )
+            # Call IBM Granite via watsonx.ai API
+            if self.granite_api_key:
+                response = self._call_granite_api(prompt)
+                if response:
+                    return response
             
-            result = json.loads(response.choices[0].message.content)
-            
-            # Validate and sanitize the response
-            return {
-                'category': result.get('category', 'General'),
-                'simplified_text': result.get('simplified_text', 'Unable to simplify this clause.'),
-                'risk_level': result.get('risk_level', 'low').lower(),
-                'key_terms': result.get('key_terms', [])[:10],  # Limit to 10 terms
-                'concerns': result.get('concerns', [])[:5]  # Limit to 5 concerns
-            }
+            # Fallback to keyword-based classification
+            return self._fallback_classification(clause_text)
             
         except Exception as e:
             # Fallback classification using keyword matching
             return self._fallback_classification(clause_text)
+            
+    def _call_granite_api(self, prompt: str) -> Dict[str, Any]:
+        """Make API call to IBM Granite model"""
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.granite_api_key}"
+        }
+        
+        payload = {
+            "model_id": self.model_id,
+            "inputs": [prompt],
+            "parameters": {
+                "temperature": 0.3,
+                "max_new_tokens": 500,
+                "top_p": 1.0
+            },
+            "project_id": self.granite_project_id
+        }
+        
+        try:
+            response = requests.post(self.granite_api_url, headers=headers, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                result_data = response.json()
+                
+                if "results" in result_data and len(result_data["results"]) > 0:
+                    generated_text = result_data["results"][0]["generated_text"]
+                    
+                    # Try to parse as JSON
+                    try:
+                        result = json.loads(generated_text)
+                        
+                        # Validate and sanitize the response
+                        return {
+                            'category': result.get('category', 'General'),
+                            'simplified_text': result.get('simplified_text', 'Unable to simplify this clause.'),
+                            'risk_level': result.get('risk_level', 'low').lower(),
+                            'key_terms': result.get('key_terms', [])[:10],
+                            'concerns': result.get('concerns', [])[:5]
+                        }
+                    except json.JSONDecodeError:
+                        # If not valid JSON, return fallback
+                        return None
+            
+            return None
+            
+        except Exception as e:
+            st.warning(f"IBM Granite API error: {str(e)}")
+            return None
     
     def _fallback_classification(self, clause_text: str) -> Dict[str, Any]:
         """Fallback classification using keyword matching"""
