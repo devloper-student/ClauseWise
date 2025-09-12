@@ -1,0 +1,112 @@
+You are an expert AI software architect.  
+Build a complete end-to-end project named **ClauseWise – AI-Powered Legal Document Analyzer** with the following features:
+
+## 1. Tech Stack
+- **Backend (FastAPI)**: Handles API requests, routes to NLP modules, risk detection, and summarization.  
+- **Frontend (Streamlit)**: Unique, professional dashboard UI with sidebar navigation, search box, and traffic-light risk indicators (green=OK, yellow=warning, red=high risk).  
+- **AI/NLP Layer**:  
+   - Hugging Face Transformers with **IBM Granite 3.3B Instruct model** (`ibm-granite/granite-3.3b-instruct`) for plain-language summarization.  
+   - Legal-BERT for clause classification.  
+   - LangChain for orchestration of AI calls.  
+- **Parsing Layer**: Support PDF, DOCX, and TXT uploads (`pdfplumber`, `python-docx`).  
+- **Risk Detection Engine**: Rule-based + Granite-powered reasoning to check missing or risky clauses (indemnity, liability, NDA, termination, etc.).  
+- **Database**: MongoDB (preferred) or SQLite fallback for storing documents, extracted clauses, summaries, and user feedback.  
+- **Deployment-ready**: Must run smoothly in Replit with `requirements.txt`.  
+
+## 2. Core Features
+1. Upload contract files (PDF/DOCX/TXT).  
+2. Automatic clause segmentation & classification (NDA, liability, indemnity, etc.).  
+3. Summarize clauses into plain English using **IBM Granite 3.3B**.  
+4. Risk detection: flag missing/risky clauses with color-coded indicators.  
+5. Interactive frontend: searchable clause viewer, side-by-side original text + simplified summary.  
+6. Exportable reports in **PDF/Word** format.  
+7. Basic authentication (username/password sessions).  
+8. Mobile-friendly, responsive UI.  
+
+## 3. AI Layer Requirements
+- Load IBM Granite 3.3B using Hugging Face `transformers`:
+```python
+from transformers import pipeline
+granite_pipe = pipeline("text-generation", model="ibm-granite/granite-3.3b-instruct", trust_remote_code=True)
+Prompt format for clause simplification:
+
+text
+Copy code
+You are a legal assistant. Simplify the following legal clause into plain English while preserving meaning:
+<CLAUSE TEXT HERE>
+Ensure responses are concise, legally accurate, and avoid hallucinations.
+
+4. Project Structure
+bash
+Copy code
+ClauseWise/
+│── backend/
+│   ├── main.py              # FastAPI server & routes
+│   ├── ai_engine.py         # Hugging Face + Granite + Legal-BERT
+│   ├── risk_engine.py       # Rule-based + Granite risk detection
+│   ├── parser.py            # PDF/DOCX/TXT extraction
+│   ├── db.py                # MongoDB/SQLite integration
+│
+│── frontend/
+│   ├── app.py               # Streamlit UI
+│   ├── components/          # Custom UI widgets
+│
+│── tests/
+│   ├── test_parser.py
+│   ├── test_ai.py
+│
+│── requirements.txt
+│── README.md
+5. requirements.txt
+php
+Copy code
+fastapi
+uvicorn
+streamlit
+pdfplumber
+python-docx
+pymongo
+sqlite3-binary
+transformers
+torch
+accelerate
+langchain
+ibm-watson
+loguru
+reportlab
+6. UI/UX Guidelines
+Unique legal-tech dashboard theme with cards and tabs.
+
+Sidebar navigation: Upload | View Analysis | Risk Summary | Download Report.
+
+Clause viewer: expandable panels showing original text vs simplified summary.
+
+Search bar for quick clause lookup.
+
+Risk indicators: traffic-light system.
+
+Export button for PDF/Word reports.
+
+Clear disclaimer banner: “ClauseWise is an AI assistant, not a replacement for professional legal advice.”
+
+7. Development Notes
+Use async FastAPI routes for performance.
+
+Implement caching for repeated clause lookups.
+
+Add logging with Loguru and lightweight analytics (processing time, number of clauses).
+
+Provide sample contracts for demo testing.
+
+8. Deliverables
+Fully working backend (FastAPI) and frontend (Streamlit).
+
+Smooth integration of IBM Granite 3.3B summarizer.
+
+End-to-end system tested on Replit.
+
+Can run with:
+
+python backend/main.py (FastAPI server)
+
+streamlit run frontend/app.py (Frontend UI)
