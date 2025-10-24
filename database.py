@@ -6,6 +6,10 @@ from typing import List, Dict, Any, Optional
 
 DATABASE_FILE = "clausewise.db"
 
+# Auto-remove database at startup
+if os.path.exists(DATABASE_FILE):
+    os.remove(DATABASE_FILE)
+
 def init_database():
     """Initialize the SQLite database with required tables"""
     conn = sqlite3.connect(DATABASE_FILE)
