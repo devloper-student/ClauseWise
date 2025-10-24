@@ -37,7 +37,6 @@ distlib==0.4.0
 distro==1.9.0
 docx==0.2.4
 dulwich==0.24.2
-en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl#sha256=1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85
 executing==2.2.0
 fastjsonschema==2.21.1
 filelock==3.19.1
@@ -143,7 +142,6 @@ PyYAML==6.0.2
 pyzmq==26.2.1
 RapidFuzz==3.14.1
 referencing==0.36.2
--e git+https://github.com/devloper-student/ClauseWise@e691803c86fc4fc0c9f27acb83a75c34b033421e#egg=repl_nix_workspace
 reportlab==4.4.4
 requests==2.32.3
 requests-toolbelt==1.0.0
@@ -200,8 +198,7 @@ pdfplumber
 python-docx==1.2.0
 spacy
 reportlab==4.4.3
-# Editable install with no version control (workspace==0.1.0)
--e c:\users\thavv\softwares\cognitivex-145-clausewiselegaldocanalyzer
 wrapt==1.17.3
 zstandard==0.25.0
+
 
