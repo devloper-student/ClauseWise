@@ -116,4 +116,8 @@ This project is licensed under the **MIT License** – free to use, modify, and 
 
 ## 👩‍💻 Author
 
-* **Keerthu-08-02** – Developer & Maintainer
+* **devloper-student** – Developer & Maintainer
+
+## OUTPUT
+
+* https://clausewise-legal-doc-analyzer.streamlit.app/ - use this link for deployd application
